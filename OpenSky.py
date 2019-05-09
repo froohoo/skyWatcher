@@ -19,7 +19,7 @@ class AirTraffic():
         return self.geo
     def get_serviceInfo(self):
         return self.serviceInfo
-    def get_airTraffic(self):
+    def get_traffic(self):
         if self.session:
             r = self.session.get(
                     self.serviceInfo['endpoint'], params=self.geo)

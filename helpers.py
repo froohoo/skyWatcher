@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from sqlalchemy import Table, Column, Integer, Unicode, MetaData, create_engine
 from sqlalchemy.orm import mapper, create_session
+from OpenSky import AirTraffic
 import csv
 import argparse
 import numpy as np
@@ -25,7 +26,7 @@ class RegistrationDB():
         self.record = None 
 
 
-    def importData(self):
+    def import_data(self):
         with open(self.csv, 'r') as f:
             r=csv.reader(f)
             self.headers = next(r)
@@ -44,7 +45,7 @@ class RegistrationDB():
             con.close()
             self.query = self.session.query(self.mapClass)
 
-    def getRecord(self, str_icao24):
+    def get_record(self, str_icao24):
         record = self.query.filter(self.mapClass.icao24==str_icao24).one()
         return record.__dict__
 
@@ -75,14 +76,67 @@ def getArgs(config):
             help="path to icao24 registration csv")
     return vars(parser.parse_args())
 
+class detection():
 
-def procImage(frame, box, record, imageFolder, imageNum):
-    (h,w) = frame.shape[:2]
-    bb = box * np.array([w,h,w,h])
-    imagename=path.join(imageFolder, str(imageNum) +'.jpg')
-    meatname=path.join(imageFolder, str(imageNum) + '.toml')
-    metadata = {'imagename':imagename, 'bb':bb, 'record':record}
-    cv2.imwrite(imagename, frame)
-    with open(metaname, 'w') as f:
-        toml.dump(metadata, f)
-    
+    def __init__(self,frame,box):
+        self.frame = frame
+        self.box   = box
+
+    def get_frame(self):
+        return self.frame
+
+    def get_box(self):
+        return self.box
+
+    def set_frame(self, frame):
+        self.frame = frame
+
+    def set_box(self, box):
+        self.box = box
+
+
+class ImageAnnotater():
+
+    def __init__(self, q, c, imageNum=0):
+        self.q = q
+        self.regCSV = c['data']['regDB']
+        self.imageFolder = c['data']['imageFolder']
+        self.geofence = c['geofence']
+        self.openSky = c['openSky']
+        self.imageNum = imageNum
+        self.regDB = None
+        self.traffic = None
+
+    def init_regDB(self):
+        if self.regDB is None:
+            self.regDB = RegistrationDB(self.regCSV)
+            self.regDB.import_data()
+ 
+    def init_openSky(self):
+        if self.traffic is None:
+            self.traffic= AirTraffic(self.geofence, self.openSky)
+
+    def run(self):
+        if (self.regDB is None) or (self.traffic is None):
+            self.init_regDB()
+            self.init_openSky()
+        w = Process(target=self.worker)
+        w.start()
+        w.join()
+
+    def worker(self):
+        while True:
+            d = q.get(block=True)
+            img = d.get_frame()
+            box = d.get_box()
+            (h,w) = img.shape[:2]
+            bb = box * np.array([w,h,w,h])
+            icao24 = self.traffic.get_traffic()[0][0]
+            record = self.regDB.get_record(ica024)
+            imagename=path.join(imageFolder, str(imageNum) +'.jpg')
+            meatname=path.join(imageFolder, str(imageNum) + '.toml')
+            metadata = {'imagename':imagename, 'bb':bb, 'record':record}
+            cv2.imwrite(imagename, img)
+            with open(metaname, 'w') as f:
+                toml.dump(metadata, f)
+
