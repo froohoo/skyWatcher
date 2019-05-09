@@ -1,0 +1,47 @@
+
+[openSky]
+username = ''
+apikey = ''
+endpoint = 'https://opensky-network.org/api/states/all'
+
+
+[geofence]
+lamin = '44.890881'
+lamax = '44.947258'
+lomin = '-93.314633'
+lomax = '-93.273901'
+
+[gui]
+montageW = 3
+montageH = 1
+
+[data]
+regDB = 'acdb.csv'
+imageFolder = '~/airplanes'
+
+[mobileNet]
+prototxt = 'prototxt'
+model = 'model'
+confidence = 0.2
+CLASSES= ["background",
+          "aeroplane",
+          "bicycle",
+          "bird",
+          "boat",
+          "bottle",
+          "bus",
+          "car",
+          "cat",
+          "chair",
+          "cow",
+          "diningtable",
+          "dog",
+          "horse",
+          "motorbike",
+          "person",
+          "pottedplant",
+          "sheep",
+          "sofa",
+          "train",
+          "tvmonitor"]
+CONSIDER=["aeroplane"]
