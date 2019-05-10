@@ -135,6 +135,7 @@ class ImageAnnotater():
             print('Got a message with bb: ', box)
             (h,w) = img.shape[:2]
             bb = box * np.array([w,h,w,h])
+            bb = bb.astype("int")
             traffic = self.traffic.get_traffic()
             if traffic is None: continue
             icao24 = traffic[0][0]
