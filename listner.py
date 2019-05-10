@@ -2,7 +2,6 @@
 
 from datetime import datetime
 from OpenSky import AirTraffic
-from multiprocessing import Process, Queue
 import numpy as np
 from threading import Thread
 import imagezmq.imagezmq as imagezmq
@@ -22,17 +21,16 @@ except FileNotFoundError:
 # over-ride config with command line args if present
 args = helpers.getArgs(c)
 
-imageNum = 0
 imageHub = imagezmq.ImageHub()
 
-print("[INFO] creating opensky-network.org session...")
-traffic = AirTraffic(c['geofence'], c['openSky'], session=False)
-traffic.get_airTraffic()
-
-print("[INFO] loading aircraft registration data ...")
-acDB = helpers.RegistrationDB(args['regDB'])
-acDB.importData()
-
+print("[INFO] intitalizing annotation proces...")
+annotater = helpers.ImageAnnotater(c)
+print("[INFO] initializing annotation registration database...")
+annotater.init_regDB()
+print("[INFO] initializing annotation OpenSky client...")
+annotater.init_openSky()
+print("[INFO] spawning worker thread to handle annotations...")
+annotater.run()
 print("[INFO] initializing motion detector and mobileNet model...")
 CLASSES = c['mobileNet']['CLASSES']
 motionDetector = MotionExtractor()
@@ -55,13 +53,14 @@ print("[INFO] detecting: {}...".format(", ".join(obj for obj in CONSIDER)))
 while True:
     (rpiName, raw_frame) = imageHub.recv_image()
     imageHub.send_reply(b'OK')
-    frame = np.copy(raw_frame)
+    frame = raw_frame.copy()
     if rpiName not in lastActive.keys():
         print("[INFO] receiving data from {}...".format(rpiName))
 
     lastActive[rpiName] = datetime.now()
     print(frame.shape)
     frame = motionDetector.getMotionCrop(frame)
+    guiframe=frame.copy() 
     (h,w) = frame.shape[:2]
     blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300,300)), 
             0.007843, (300,300), 127.5)
@@ -76,37 +75,27 @@ while True:
         if confidence > args["confidence"]:
             idx = int(detections[0,0,i,1])
             if CLASSES[idx] in CONSIDER:
-                print("[INFO] Detection...")
-                at = traffic.get_airTraffic()
-                record = acDB.getRecord(at[0][0])
-                objCount[CLASSES[idx]] += 1
-                dethandler = Thread(target=helpers.procImage,
-                        args=(frame, detections[0,0,i,3:7], record, 
-                            args['imageFolder'], imageNum))
-                dethandler.start()
-                '''
+                print("[INFO] detection event...")
+                d = helpers.Detection(frame,detections[0,0,i,3:7])
+                annotater.q.put(d)
                 box = detections[0,0,i,3:7] * np.array([w,h,w,h])
                 (startX, startY, endX, endY) = box.astype("int")
-                filename=path.join(args['imageFolder'], str(imageNum)+'.jpg')
-                print(traffic.get_airTraffic())
-                cv2.imwrite(filename, raw_frame)
-                cv2.rectangle(frame, (startX, startY), (endX, endY), 
+                cv2.rectangle(guiframe, (startX, startY), (endX, endY), 
                         (255,0,0), 2)
-                '''
-                imageNum += 1
+                
                 
 
-    cv2.putText(frame,rpiName, (10,25), 
+    cv2.putText(guiframe,rpiName, (10,25), 
             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0, 255), 2)
     label=", ".join("{}: {}".format(obj, count) for (obj, count) in
             objCount.items())
-    cv2.putText(frame, label, (10, h-20), 
+    cv2.putText(guiframe, label, (10, h-20), 
             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 2)
     label="Raw Image: " + str(raw_frame.shape)
     cv2.putText(raw_frame, label, (10,30), 
             cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0,0,255), 6)
     frameDict[rpiName+" raw"] = raw_frame
-    frameDict[rpiName+" detections"] = frame
+    frameDict[rpiName+" detections"] = guiframe
     frameDict[rpiName+" foreground"] = motionDetector.getForeground()
     montages = imutils.build_montages(frameDict.values(), (w,h), (mW, mH))
 

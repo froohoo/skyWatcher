@@ -2,7 +2,8 @@
 from sqlalchemy import Table, Column, Integer, Unicode, MetaData, create_engine
 from sqlalchemy.orm import mapper, create_session
 from OpenSky import AirTraffic
-import csv
+from multiprocessing import Process, Queue
+import csv, toml
 import argparse
 import numpy as np
 import cv2 as cv2
@@ -47,7 +48,9 @@ class RegistrationDB():
 
     def get_record(self, str_icao24):
         record = self.query.filter(self.mapClass.icao24==str_icao24).one()
-        return record.__dict__
+        d = record.__dict__
+        del d['_sa_instance_state']
+        return d
 
 def getArgs(config):
     c = config
@@ -76,7 +79,7 @@ def getArgs(config):
             help="path to icao24 registration csv")
     return vars(parser.parse_args())
 
-class detection():
+class Detection():
 
     def __init__(self,frame,box):
         self.frame = frame
@@ -97,10 +100,10 @@ class detection():
 
 class ImageAnnotater():
 
-    def __init__(self, q, c, imageNum=0):
-        self.q = q
+    def __init__(self, c, imageNum=0):
+        self.q = Queue()
         self.regCSV = c['data']['regDB']
-        self.imageFolder = c['data']['imageFolder']
+        self.imageFolder = path.expanduser(c['data']['imageFolder'])
         self.geofence = c['geofence']
         self.openSky = c['openSky']
         self.imageNum = imageNum
@@ -122,21 +125,25 @@ class ImageAnnotater():
             self.init_openSky()
         w = Process(target=self.worker)
         w.start()
-        w.join()
+        #w.join()
 
     def worker(self):
         while True:
-            d = q.get(block=True)
+            d = self.q.get(block=True)
             img = d.get_frame()
             box = d.get_box()
+            print('Got a message with bb: ', box)
             (h,w) = img.shape[:2]
             bb = box * np.array([w,h,w,h])
-            icao24 = self.traffic.get_traffic()[0][0]
-            record = self.regDB.get_record(ica024)
-            imagename=path.join(imageFolder, str(imageNum) +'.jpg')
-            meatname=path.join(imageFolder, str(imageNum) + '.toml')
+            traffic = self.traffic.get_traffic()
+            if traffic is None: continue
+            icao24 = traffic[0][0]
+            record = self.regDB.get_record(icao24)
+            imagename = path.join(self.imageFolder, str(self.imageNum) +'.jpg')
+            metaname = path.join(self.imageFolder, str(self.imageNum) + '.toml')
             metadata = {'imagename':imagename, 'bb':bb, 'record':record}
             cv2.imwrite(imagename, img)
             with open(metaname, 'w') as f:
                 toml.dump(metadata, f)
+            self.imageNum += 1
 
