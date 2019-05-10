@@ -6,10 +6,10 @@ endpoint = 'https://opensky-network.org/api/states/all'
 
 
 [geofence]
-lamin = '44.890881'
-lamax = '44.947258'
-lomin = '-93.314633'
-lomax = '-93.273901'
+lamin = '44.915368'
+lamax = '44.928452'
+lomin = '-93.308671'
+lomax = '-93.277638'
 
 [gui]
 montageW = 3
