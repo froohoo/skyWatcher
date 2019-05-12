@@ -6,7 +6,7 @@ import numpy as np
 # returns the cropped region of interest of size resolution.
 
 class MotionExtractor:
-    def __init__(self, history=5, resolution=(300,300), dist2Threshold=800.0,
+    def __init__(self, history=5, resolution=(300,300), dist2Threshold=2800.0,
             detectShadows=False):
         self.outW = resolution[0]
         self.outH = resolution[1]
