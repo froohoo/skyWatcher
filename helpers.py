@@ -3,7 +3,7 @@ from sqlalchemy import Table, Column, Integer, Unicode, MetaData, create_engine
 from sqlalchemy.orm import mapper, create_session
 from OpenSky import AirTraffic
 from multiprocessing import Process, Queue
-import csv, toml
+import csv,glob,toml
 import argparse
 import numpy as np
 import cv2 as cv2
@@ -52,8 +52,13 @@ class RegistrationDB():
         del d['_sa_instance_state']
         return d
 
-def getArgs(config):
-    c = config
+def getNewestImgNum(imgPath):
+    imageFolder = path.expanduser(imgPath)
+    fileList = glob.glob(path.join(imageFolder,'*'))
+    newest = max(fileList, key=path.getctime)
+    return int(path.split(newest)[1].split('.')[0])
+
+def getArgs(c):
     #construct the argument parser
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--prototxt", type=str,
@@ -100,16 +105,18 @@ class Detection():
 
 class ImageAnnotater():
 
-    def __init__(self, c, imageNum=0):
+    def __init__(self, c, imgNum=None):
         self.q = Queue()
         self.regCSV = c['data']['regDB']
         self.imageFolder = path.expanduser(c['data']['imageFolder'])
         self.geofence = c['geofence']
         self.openSky = c['openSky']
-        self.imageNum = imageNum
         self.regDB = None
         self.traffic = None
-
+        if imgNum is None:
+            self.imageNum = getNewestImgNum(self.imageFolder) + 1
+        else:
+            self.imageNum = imageNum
     def init_regDB(self):
         if self.regDB is None:
             self.regDB = RegistrationDB(self.regCSV)
