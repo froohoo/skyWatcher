@@ -12,3 +12,6 @@ SkyWatcher is designed to do one thing: Automate the task of capturing aircraft 
 SkyWatcher's video capture setup is based in large part on the excellent tutorial provided by Adrian Rosebrock [located here](https://www.pyimagesearch.com/2019/04/15/live-video-streaming-over-network-with-opencv-and-imagezmq/). It uses ØMQ to transoport images captured by a raspberry pi zero W. I liked this idea because the zero W is cheap ($5 at Micro Center) and I already had a webcam to use with it. For my setup, I assembled everything into a used Ferro Rocher chocolate box ($7.39 at Target). Bonus: You get to eat the chocoloates inside. Everything is precision attached with hot glue.
 ![pi-zero](images/IMG_8338.JPG)
 
+### Motion Detection & Cropping (Step 2)
+I currently am using [Mobile Net](https://arxiv.org/abs/1704.04861) as the detector because it was used in the tutorial above. Also  
+
