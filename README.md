@@ -26,7 +26,44 @@ The crop is fed through the pretrained MobileNet-SSD to find any aircraft in the
 ![C130 Montage](/images/C130Montage.gif)
 
 ### Annotation 
-The annotation process runs in a separate instance and accepts detection objects on its queue that consist of the cropped image and the bounding box returned by the MobileNet-SSD. However, I want to annotate these images with as much of the make/model/registration data as possible. To do this, I leverage the opensky-network.org REST API to perform a geofence query for aircraft over my house. Unlike Flightaware, which I also like, opensky-network offers the ability to do geofence queries, and anonomous REST calls. Can't say enough good things about their service, it relies on crowd sourced ADS-B transponder message collection that they aggregate at their site. Succesful opensky queries will return a json object similar to this: ```[['a091f3', 'EDV5236 ', 'United States', 1557752329, 1557752329, -93.3005, 44.9273, 662.94, False, 77.62, 123.37, -4.55, None, 647.7, '3745', False, 0]]```
+The annotation process runs in a separate instance and accepts detection objects on its queue that consist of the cropped image and the bounding box returned by the MobileNet-SSD. However, I want to annotate these images with as much of the make/model/registration data as possible. To do this, I leverage the opensky-network.org REST API to perform a geofence query for aircraft over my house. Unlike Flightaware, which I also like, opensky-network offers the ability to do geofence queries, and anonomous REST calls. Can't say enough good things about their service, it relies on volunteer crowd sourced ADS-B transponder message collection that is aggregated at their site. Succesful opensky queries will return a json object similar to this: ```[['a091f3', 'EDV5236 ', 'United States', 1557752329, 1557752329, -93.3005, 44.9273, 662.94, False, 77.62, 123.37, -4.55, None, 647.7, '3745', False, 0]]``` For my purposes I am only interested in the first member which is the ica024 transponder code for the aircraft (for details on their whole api, [see here](https://opensky-network.org/apidoc). The icao34 hex code is unique to each aircraft and is often a hash of its registration number. I could not locate any services that would provide an aircraft registration REST interface but opensky also offers download of their entire registration database(updated daily) in csv format. This db is available in other locations, like from the FAA/NTSB but I found opensky's to be the simplest to use because it is just one file unlike the FAA's multi-table download. 
+
+Assuming the opensky query returned a icao24 identifier, the annotater does a local lookup of the in memory registration database (~ 500,000 rows) and returns the registration details associated with that transponder. The annotation, along with the bounding box for the aircraft, are stored in a toml file with the same nameing convention as the aircraft. I chose TOML because there are so many different annotation formats already that trying to adehere to an XML, KITTI or other annotation standard just didn't seem worth the effort since I'll likely have do do some preprocessing on it anyway.. and TOML is just so simple to use and read. A sample of a TOML annotation for the previous aircraft detection is shown here:
+```
+bb = [ "133", "182", "164", "199",]
+imagename = "/home/nvidia/airplanes/1107.jpg"
+
+[record]
+operatorcallsign = "DELTA"
+firstflightdate = ""
+serialnumber = "55026"
+acars = "false"
+notes = ""
+testreg = ""
+owner = "Wells Fargo Trust Co Na Trustee"
+registration = "N965AT"
+icaoaircrafttype = "L2J"
+manufacturername = "Boeing"
+model = "717-200"
+registered = ""
+operatoriata = ""
+operatoricao = "DAL"
+status = ""
+adsb = "false"
+seatconfiguration = ""
+operator = ""
+icao24 = "ad6ecb"
+engines = "BMW ROLLS BR 700 SERIES"
+reguntil = "2021-04-30"
+categoryDescription = ""
+id = 358359
+linenumber = ""
+manufacturericao = "BOEING"
+built = "2001-01-01"
+typecode = "B712"
+modes = "false"
+```
+
 
 
 
