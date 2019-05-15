@@ -10,6 +10,7 @@ import toml
 from motionextractor import MotionExtractor
 import cv2
 import helpers
+import os.path as path
 
 # read from config
 try: 
