@@ -23,7 +23,7 @@ zmq==0.0.0
 ```
 
 Plus: 
-imagezmq & imutils from Adriam Rosebrock's [awesome tutorial](https://www.pyimagesearch.com/2019/04/15/live-video-streaming-over-network-with-opencv-and-imagezmq/).
+imagezmq & imutils from Adrian Rosebrock's [awesome tutorial](https://www.pyimagesearch.com/2019/04/15/live-video-streaming-over-network-with-opencv-and-imagezmq/).
 
 
 
