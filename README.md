@@ -47,7 +47,7 @@ imagezmq & imutils from Adrian Rosebrock's [awesome tutorial](https://www.pyimag
 
 
 ## Running
-The skyWatcher.toml file should be updated, at a mimimum to specify your geofence where observations are made. If you don't know the  lattitude and longitude of your geofence, they can be read on google maps by right clicking the map and selecting 'what's here'. Otherwise, the annotater will be searching for air traffic in the wrong location...probably mine. Everything else can be pretty much left as is unless you have an open-sky api key you want to use, which comes with the benifit of more precisision and historical lookups.
+The skyWatcher.toml file should be updated, at a mimimum to specify your geofence, and a location where the image files and annotations will be written to. If you don't know the  lattitude and longitude of your geofence, they can be read on google maps by right clicking the map and selecting 'what's here'. Otherwise, the annotater will be searching for air traffic in the wrong location...probably mine. Everything else can be pretty much left as is unless you have an open-sky api key you want to use, which comes with the benifit of more precisision and historical lookups.
 
 watcher.py is run on the node with the camera (raspberry pi in my case) and is launched by specifying the IP and port of the listening node, for example: 
 ``` ./watcher.py -s 10.42.0.1 -p 5555 ```
