@@ -1,14 +1,17 @@
 # SkyWatcher
 **An automated aircraft annotation system for my backyard.. or anywhere really**
 
-![animated gif](animation.gif)
+![animated gif](images/animation.gif)
 
 ## Description
 SkyWatcher is designed to do one thing: Automate the task of capturing aircraft images along with annotations. Why? Firstly, I live in the approach path to MSP. Secondly, I love airplanes, and lastly I really like exploring robotics, machine learning and computer vision topics. The end goal is to be able to build a detector/classifier that can reliably determine what type of aircraft is being observed through visual recognition alone. To do that I need a lot of training samples and although I'm no stranger to hand annotation (https://github.com/froohoo/Inference) I didn't really want to do that again. Plus I have always been intrigued by opportunites to automate the generation of high quality training annotated data.
 
 
 ## Requirements
+
 ```
+On server / listening node:
+----------------------------
 certifi==2019.3.9
 chardet==3.0.4
 idna==2.8
@@ -20,14 +23,41 @@ SQLAlchemy==1.3.3
 toml==0.10.0
 urllib3==1.24.3
 zmq==0.0.0
+
+Symbolic link in working directory to:
+------------------------------
+MobileNetSSD_deploy.caffemodel
+MobileNetSSD_deoply.prototxt.txt
+
+Symbolic link in working directory to aircraft database such as found at:
+-------------------------------
+http://opensky-network.org/datasets/metadata
+
+On streaming /pi camera node:
+----------------------------
+numpy==1.16.3
+opencv-python==3.4.4.19
+pyzmq==18.0.1
+zmq==0.0.0
+
 ```
 
-Plus: 
+Plus both need: 
 imagezmq & imutils from Adrian Rosebrock's [awesome tutorial](https://www.pyimagesearch.com/2019/04/15/live-video-streaming-over-network-with-opencv-and-imagezmq/).
 
 
+## Running
+The skyWatcher.toml file should be updated, at a mimimum to specify your geofence, and a location where the image files and annotations will be written to. If you don't know the  lattitude and longitude of your geofence, they can be read on google maps by right clicking the map and selecting 'what's here'. Otherwise, the annotater will be searching for air traffic in the wrong location...probably mine. Everything else can be pretty much left as is unless you have an open-sky api key you want to use, which comes with the benifit of more precisision and historical lookups.
 
-## Operation
+watcher.py is run on the node with the camera (raspberry pi in my case) and is launched by specifying the IP and port of the listening node, for example: 
+``` ./watcher.py -s 10.42.0.1 -p 5555 ```
+
+On the listening node, the image processing/annotation processes are started as follows, assuming the skyWatcher.toml is correctly configured and symbolic links to the MobileNetSSD and aircraft database are set:
+``` ./listner.py```
+
+Listner prints the source image shape, and crop bounding box coordinates when it gets images from the watcher node. 
+
+## Description of Operation
 
 ### Capture Video (Step 1)
 SkyWatcher's video capture setup is based in large part on the excellent tutorial provided by Adrian Rosebrock [located here](https://www.pyimagesearch.com/2019/04/15/live-video-streaming-over-network-with-opencv-and-imagezmq/). It uses ØMQ to transport images captured by a raspberry pi zero W. I liked this idea because the zero W is cheap ($5 at Micro Center) and I already had a webcam to use with it. For my setup, I assembled everything into a used Ferro Rocher chocolate box ($7.39 at Target). Bonus: You get to eat the chocoloates inside. Everything is precision attached with hot glue.
