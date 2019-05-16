@@ -24,6 +24,15 @@ toml==0.10.0
 urllib3==1.24.3
 zmq==0.0.0
 
+Symbolic link in working directory to:
+------------------------------
+MobileNetSSD_deploy.caffemodel
+MobileNetSSD_deoply.prototxt.txt
+
+Symbolic link in working directory to aircraft database such as found at:
+-------------------------------
+http://opensky-network.org/datasets/metadata
+
 On streaming /pi camera node:
 ----------------------------
 numpy==1.16.3
@@ -33,8 +42,11 @@ zmq==0.0.0
 
 ```
 
-Plus: 
+Plus both need: 
 imagezmq & imutils from Adrian Rosebrock's [awesome tutorial](https://www.pyimagesearch.com/2019/04/15/live-video-streaming-over-network-with-opencv-and-imagezmq/).
+
+
+## Running
 
 
 
