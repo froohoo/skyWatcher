@@ -1,14 +1,17 @@
 # SkyWatcher
 **An automated aircraft annotation system for my backyard.. or anywhere really**
 
-![animated gif](animation.gif)
+![animated gif](images/animation.gif)
 
 ## Description
 SkyWatcher is designed to do one thing: Automate the task of capturing aircraft images along with annotations. Why? Firstly, I live in the approach path to MSP. Secondly, I love airplanes, and lastly I really like exploring robotics, machine learning and computer vision topics. The end goal is to be able to build a detector/classifier that can reliably determine what type of aircraft is being observed through visual recognition alone. To do that I need a lot of training samples and although I'm no stranger to hand annotation (https://github.com/froohoo/Inference) I didn't really want to do that again. Plus I have always been intrigued by opportunites to automate the generation of high quality training annotated data.
 
 
 ## Requirements
+
 ```
+On server / listening node:
+----------------------------
 certifi==2019.3.9
 chardet==3.0.4
 idna==2.8
@@ -20,6 +23,14 @@ SQLAlchemy==1.3.3
 toml==0.10.0
 urllib3==1.24.3
 zmq==0.0.0
+
+On streaming /pi camera node:
+----------------------------
+numpy==1.16.3
+opencv-python==3.4.4.19
+pyzmq==18.0.1
+zmq==0.0.0
+
 ```
 
 Plus: 
