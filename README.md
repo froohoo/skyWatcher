@@ -47,10 +47,17 @@ imagezmq & imutils from Adrian Rosebrock's [awesome tutorial](https://www.pyimag
 
 
 ## Running
+The skyWatcher.toml file should be updated, at a mimimum to specify your geofence where observations are made. Otherwise, the annotater will be searching for air traffic in the wrong location. Everything else can be pretty much left as is unless you have an open-sky api key you want to use, which comes with the benifit of more precisision and historical lookups.
 
+watcher.py is run on the node with the camera (raspberry pi in my case) and is launched by specifying the IP and port of the listening node, for example: 
+``` ./watcher.py -s 10.42.0.1 -p 5555 ```
 
+On the listening node, the image processing/annotation processes are started as follows, assuming the skyWatcher.toml is correctly configured and symbolic links to the MobileNetSSD and aircraft database are set:
+``` ./listner.py```
 
-## Operation
+Listner prints the source image shape, and crop bounding box coordinates when it gets images from the watcher node. 
+
+## Description of Operation
 
 ### Capture Video (Step 1)
 SkyWatcher's video capture setup is based in large part on the excellent tutorial provided by Adrian Rosebrock [located here](https://www.pyimagesearch.com/2019/04/15/live-video-streaming-over-network-with-opencv-and-imagezmq/). It uses ØMQ to transport images captured by a raspberry pi zero W. I liked this idea because the zero W is cheap ($5 at Micro Center) and I already had a webcam to use with it. For my setup, I assembled everything into a used Ferro Rocher chocolate box ($7.39 at Target). Bonus: You get to eat the chocoloates inside. Everything is precision attached with hot glue.
