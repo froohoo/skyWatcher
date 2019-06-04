@@ -26,7 +26,8 @@ class JpegSender(Jpeg):
         self.ffproc = None
 
     def run_ffmpeg(self):
-        ffcmd = ffmpeg.input(self.device, format='v4l2', input_format='mjpeg')
+        ffcmd = ffmpeg.input(self.device, format='v4l2', input_format='mjpeg',
+                s='svga', r=7.5)
         ffcmd = ffmpeg.output(ffcmd, 'pipe:', format='mjpeg', vcodec='copy')
         self.ffproc = ffmpeg.run_async(ffcmd, pipe_stdout=True, pipe_stdin=True )
         self.running = True
@@ -105,9 +106,10 @@ class JpegReceiver(Jpeg):
 
     def stop(self):
         self.running = False
-        self.unregister(self.lsock)
+        self.sel.unregister(self.lsock)
         self.lsock.close()
         self.q.close()
+        self.sel.close()
             
     def worker(self):
         self.lsock.bind(self.addr)
@@ -115,9 +117,13 @@ class JpegReceiver(Jpeg):
         self.lsock.setblocking(False)
         print("listeneing on {0}:{1}".format(*self.addr))
 
-        while self.running:
-            events = self.sel.select(timeout=None)
-            for key, mask in events:
-                callback = key.data
-                callback(key, mask)
+        try:
+            while self.running:
+                events = self.sel.select(timeout=None)
+                for key, mask in events:
+                    callback = key.data
+                    callback(key, mask)
         
+        except KeyboardInterrupt: 
+            print("[INFO] Keyboard Interrupt, stopping and closing socket...")
+            self.stop()
