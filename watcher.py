@@ -1,33 +1,24 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-from imutils.video import VideoStream
-from imagezmq.imagezmq import ImageSender
+from jpegsockets import JpegSender
 import argparse
-import socket
-import time
-
-#construct the argument parser and parse the arguments
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-s', "--server-ip", required=True,
+parser.add_argument('-s', "--server-ip", type=str, required=True,
         help="ip address of the server to which the client will connect")
-parser.add_argument('-p', "--port", required=True, 
+parser.add_argument('-p', "--port", type=int, required=True, 
         help="TCP port on which servier is listening")
+parser.add_argument('-d', "--device", type=str, required=False,
+        default='/dev/video0', help="Video device to stream images from" )
 args = vars(parser.parse_args())
 
-# initialize the ImageSender object with the socket address of the server
-sender = ImageSender(connect_to="tcp://{}:{}".format(
-    args["server_ip"], args["port"]))
-print(args)
-# get the host name, initialize the video stream, and allow the
-# camera sensor to warmup
-rpiName = socket.gethostname()
-vidStream = VideoStream(src=0).start()
-time.sleep(2.0)
+try:
+    js = JpegSender(args['server_ip'], args['port'], args['device'])
+    js.run_ffmpeg()
+    js.send_jpeg()
 
-while True:
-    # read the frame from the camera and send it to the server
-    frame = vidStream.read()
-    sender.send_image(rpiName, frame)
-
+except KeyboardInterrupt:
+    print("\n\n[INFO] Keyboard Interrupt, stopping ffmpeg & closing socket...")
+    js.stop_ffmpeg
+    js.sndsock.close()
 
