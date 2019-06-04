@@ -4,6 +4,9 @@ username = ''
 apikey = ''
 endpoint = 'https://opensky-network.org/api/states/all'
 
+[network]
+host = '10.42.0.1'
+socket = 65432
 
 [geofence]
 lamin = '44.915368'

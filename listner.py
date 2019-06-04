@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 
+# Project Libraries
 from datetime import datetime
-from OpenSky import AirTraffic
+from jpegreceiver import JpegReceiver
+from motionextractor import MotionExtractor
+import helpers
+
+# External Libraries
 import numpy as np
-from threading import Thread
-import imagezmq.imagezmq as imagezmq
+import os.path as path
 import imutils
 import toml
-from motionextractor import MotionExtractor
 import cv2
-import helpers
-import os.path as path
 
 # read from config
 try: 
@@ -22,9 +23,6 @@ except FileNotFoundError:
 # over-ride config with command line args if present
 args = helpers.getArgs(c)
 
-imageHub = imagezmq.ImageHub()
-
-print("[INFO] intitalizing annotation proces...")
 annotater = helpers.ImageAnnotater(c)
 print("[INFO] initializing annotation registration database...")
 annotater.init_regDB()
@@ -32,6 +30,9 @@ print("[INFO] initializing annotation OpenSky client...")
 annotater.init_openSky()
 print("[INFO] spawning worker thread to handle annotations...")
 annotater.run()
+print("[INFO] spawning worker thread to receive jpeg's from clients")
+jpegRecv = JpegReceiver(args['host'], args['socket'])
+jpegRecv.run()
 print("[INFO] initializing motion detector and mobileNet model...")
 CLASSES = c['mobileNet']['CLASSES']
 motionDetector = MotionExtractor()
@@ -52,14 +53,15 @@ mH = args["montageH"]
 print("[INFO] detecting: {}...".format(", ".join(obj for obj in CONSIDER)))
 
 while True:
-    (rpiName, raw_frame) = imageHub.recv_image()
-    imageHub.send_reply(b'OK')
+    (rpiName, jpeg) = jpegRecv.q.get()
+    raw_frame = cv2.imdecode(np.fromstring(jpeg, np.uint8), cv2.IMREAD_COLOR) 
+    if raw_frame is None: continue
     frame = raw_frame.copy()
     if rpiName not in lastActive.keys():
         print("[INFO] receiving data from {}...".format(rpiName))
-
+    else:
+        print("{0:.1f} FPS".format(1/(datetime.now() - lastActive[rpiName]).total_seconds()))
     lastActive[rpiName] = datetime.now()
-    print(frame.shape)
     frame = motionDetector.getMotionCrop(frame)
     guiframe=frame.copy() 
     (h,w) = frame.shape[:2]
@@ -68,7 +70,6 @@ while True:
 
     net.setInput(blob)
     detections = net.forward()
-
     objCount = {obj: 0 for obj in CONSIDER}
 
     for i in np.arange(0, detections.shape[2]):

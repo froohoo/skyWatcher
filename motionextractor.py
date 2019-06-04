@@ -35,7 +35,7 @@ class MotionExtractor:
         t = center[1] - self.outH//2
         w = self.outW
         h = self.outH
-        print(l,t,w,h)
+        #print(l,t,w,h)
         if (w>50 and h>50): 
             return img[t:t+h, l:l+w]
         else:

@@ -82,6 +82,12 @@ def getArgs(c):
     parser.add_argument("-r", "--regDB", type=str,
             default=c['data']['regDB'],
             help="path to icao24 registration csv")
+    parser.add_argument("-a", "--host", type=str,
+            default=c['network']['host'],
+            help="listening interface for client connections")
+    parser.add_argument("-s", "--socket", type=int,
+            default=c['network']['socket'],
+            help="listening socket for client connections")
     return vars(parser.parse_args())
 
 class Detection():
@@ -154,4 +160,5 @@ class ImageAnnotater():
             with open(metaname, 'w') as f:
                 toml.dump(metadata, f)
             self.imageNum += 1
+
 
