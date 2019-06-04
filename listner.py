@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
 # Project Libraries
-from datetime import datetime
 from jpegsockets import JpegReceiver
 from motionextractor import MotionExtractor
 import helpers
 
 # External Libraries
+from datetime import datetime
 import numpy as np
 import os.path as path
 import imutils

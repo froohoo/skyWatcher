@@ -1,10 +1,13 @@
 import socket
-import ffmpeg
 import selectors
-import numpy as np
 from multiprocessing import Process, Queue
 import queue
 
+try:
+    import ffmpeg
+except ImportError:
+    print("[WARN] could not import ffmpeg.. if this is the listner, that is fine")
+    
 class Jpeg():
     
     SOI = b'\xff\xd8'
