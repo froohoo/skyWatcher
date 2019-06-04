@@ -16,13 +16,12 @@ certifi==2019.3.9
 chardet==3.0.4
 idna==2.8
 numpy==1.16.3
+opencv==3.4.0
 pkg-resources==0.0.0
-pyzmq==18.0.1
 requests==2.21.0
 SQLAlchemy==1.3.3
 toml==0.10.0
 urllib3==1.24.3
-zmq==0.0.0
 
 Symbolic link in working directory to:
 ------------------------------
@@ -35,16 +34,9 @@ http://opensky-network.org/datasets/metadata
 
 On streaming /pi camera node:
 ----------------------------
-numpy==1.16.3
-opencv-python==3.4.4.19
-pyzmq==18.0.1
-zmq==0.0.0
-
+ffpmeg-python==0.1.17
+future==0.17.1
 ```
-
-Plus both need: 
-imagezmq & imutils from Adrian Rosebrock's [awesome tutorial](https://www.pyimagesearch.com/2019/04/15/live-video-streaming-over-network-with-opencv-and-imagezmq/).
-
 
 ## Running
 The skyWatcher.toml file should be updated, at a mimimum to specify your geofence, and a location where the image files and annotations will be written to. If you don't know the  lattitude and longitude of your geofence, they can be read on google maps by right clicking the map and selecting 'what's here'. Otherwise, the annotater will be searching for air traffic in the wrong location...probably mine. Everything else can be pretty much left as is unless you have an open-sky api key you want to use, which comes with the benifit of more precisision and historical lookups.
