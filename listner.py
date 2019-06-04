@@ -2,7 +2,7 @@
 
 # Project Libraries
 from datetime import datetime
-from jpegreceiver import JpegReceiver
+from jpegsockets import JpegReceiver
 from motionextractor import MotionExtractor
 import helpers
 
