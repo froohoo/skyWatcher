@@ -101,7 +101,7 @@ class JpegReceiver(Jpeg):
                     name = bname.decode()
                     self.q.put_nowait((name, jpeg))
                 except UnicodeDecodeError:
-                    print('[INFO] Corrupt Comment field: {0:b}'.format(bname))
+                    print('[INFO] Corrupt Comment field....')
                 except queue.Full:
                     self.q.get()
             else:
