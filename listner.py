@@ -112,7 +112,10 @@ try:
                 if(datetime.now() - ts).seconds > ACTIVE_CHECK_SECONDS:
                     print("[INFO] lost connection to {}".format(rpiName))
                     lastActive.pop(rpiName)
-                    frameDict.pop(rpiName)
+                    frameDict.pop(rpiName+" raw")
+                    frameDict.pop(rpiName+" detections") 
+                    frameDict.pop(rpiName+" foreground")
+
 
             lastActiveCheck = datetime.now()
 

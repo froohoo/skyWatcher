@@ -16,7 +16,7 @@ lomax = '-93.277638'
 
 [gui]
 montageW = 3
-montageH = 1
+montageH = 2 
 
 [data]
 regDB = 'acdb.csv'

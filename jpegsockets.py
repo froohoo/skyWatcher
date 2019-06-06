@@ -1,5 +1,6 @@
 import socket
 import selectors
+import struct
 from multiprocessing import Process, Queue
 import queue
 
@@ -12,6 +13,7 @@ class Jpeg():
     
     SOI = b'\xff\xd8'
     EOI = b'\xff\xd9'
+    COM = b'\xff\xfe'
 
 class JpegSender(Jpeg):
 
@@ -20,10 +22,15 @@ class JpegSender(Jpeg):
         self.device = device
         self.name = socket.gethostname()
         self.running = False
-        self.inb = b''
+        self.outb = b''
         self.sndsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sndsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.ffproc = None
+        
+        bname = self.name.encode()
+        COMlen = struct.pack('>h', len(bname)+2)
+        self.COMfld = self.COM + COMlen +  bname
+        self.running = False
 
     def run_ffmpeg(self):
         ffcmd = ffmpeg.input(self.device, format='v4l2', input_format='mjpeg',
@@ -37,17 +44,20 @@ class JpegSender(Jpeg):
         self.running = False
 
     def send_jpeg(self):
+        if not self.running:
+            self.run_ffmpeg()
         self.sndsock.connect_ex(self.addr)
         while self.running:
-            self.inb += self.ffproc.stdout.read(1024)
-            start = self.inb.find(self.SOI)
-            end = self.inb.find(self.EOI)
-            if end > -1:
-                if start > -1:
-                    bname = self.name.encode()
-                    msg = self.SOI + bytes([len(bname)]) + bname  + self.inb[start:end+2]
-                    self.sndsock.sendall(msg)
-                self.inb = self.inb[end+2:]
+            rcv_data = self.ffproc.stdout.read(1024)
+            if rcv_data:
+                if self.SOI in rcv_data:
+                    soi = rcv_data.find(self.SOI)
+                    self.outb += rcv_data[:soi+2] 
+                    self.outb += self.COMfld + rcv_data[soi+2:]
+                else:
+                    self.outb += rcv_data
+            sent = self.sndsock.send(self.outb)
+            self.outb = self.outb[sent:]
 
 
 class JpegReceiver(Jpeg):
@@ -74,27 +84,28 @@ class JpegReceiver(Jpeg):
         sock = key.fileobj
         recv_data = sock.recv(1024)
         if recv_data:
-            #print("Recieved {0} bytes of data".format(len(recv_data)))
             # This approach is not, in general, correct for finding the start/end
             # of the JPEG image in the TCP stream. However, for the simple
             # MJPEG stream from the web cam, it appears to work fine.
             # Stream is modified with additional header that includes:
             # SOI(2b):NameLength(1b):RpiName(NameLength):(\n)-SOI... 
-            self.inb += recv_data
-            start = self.inb.find(self.SOI)
-            end = self.inb.find(self.EOI)
-            if end > -1:
-                if start > -1:
-                    namelen = self.inb[start+2]
-                    header = self.inb[start:start+3+namelen]
-                    jpeg = self.inb[start+3+namelen:end+2]
-                    if jpeg[0:2] == self.SOI: 
-                        name = header[3:3+namelen].decode()
-                        try:
-                            self.q.put_nowait((name, jpeg))
-                        except queue.Full:
-                            self.q.get()
-                self.inb = self.inb[end+2:]
+            if self.EOI in recv_data:
+                eoi = recv_data.find(self.EOI)
+                soi = self.inb.find(self.SOI)
+                jpeg = self.inb[soi:] + recv_data[:eoi+2]
+                self.inb = recv_data[eoi+2:]
+                COMlenpos = jpeg.find(self.COM) + 2
+                try:
+                    COMlen, = struct.unpack('>h', jpeg[COMlenpos:COMlenpos+2])
+                    bname = jpeg[COMlenpos+2:COMlenpos+COMlen]
+                    name = bname.decode()
+                    self.q.put_nowait((name, jpeg))
+                except UnicodeDecodeError:
+                    print('[INFO] Corrupt Comment field: {0:b}'.format(bname))
+                except queue.Full:
+                    self.q.get()
+            else:
+                self.inb += recv_data
         else:
             self.sel.unregister(sock)
             sock.close()
